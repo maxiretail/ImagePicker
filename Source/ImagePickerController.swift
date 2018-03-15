@@ -5,7 +5,8 @@ import Photos
 @objc public protocol ImagePickerDelegate: NSObjectProtocol {
 
   func wrapperDidPress(_ imagePicker: ImagePickerController, images: [UIImage])
-  func doneButtonDidPress(_ imagePicker: ImagePickerController, images: [UIImage])
+  @objc optional func doneButtonDidPress(_ imagePicker: ImagePickerController, images: [UIImage])
+  @objc optional func doneButtonDidPress(_ imagePicker: ImagePickerController, assets: [PHAsset])
   func cancelButtonDidPress(_ imagePicker: ImagePickerController)
 }
 
@@ -369,16 +370,19 @@ extension ImagePickerController: BottomContainerViewDelegate {
   func pickerButtonDidPress() {
     takePicture()
   }
-
+  
   func doneButtonDidPress() {
-    var images: [UIImage]
-    if let preferredImageSize = preferredImageSize {
-      images = AssetManager.resolveAssets(stack.assets, size: preferredImageSize)
-    } else {
-      images = AssetManager.resolveAssets(stack.assets)
+    if let doneButtonDidPress = delegate?.doneButtonDidPress(_:assets:) {
+      doneButtonDidPress(self, stack.assets)
+    } else if let doneButtonDidPress = delegate?.doneButtonDidPress(_:images:) {
+      var images: [UIImage]
+      if let preferredImageSize = preferredImageSize {
+        images = AssetManager.resolveAssets(stack.assets, size: preferredImageSize)
+      } else {
+        images = AssetManager.resolveAssets(stack.assets)
+      }
+      doneButtonDidPress(self, images)
     }
-
-    delegate?.doneButtonDidPress(self, images: images)
   }
 
   func cancelButtonDidPress() {
